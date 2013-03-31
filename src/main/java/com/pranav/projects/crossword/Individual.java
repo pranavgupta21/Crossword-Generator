@@ -14,11 +14,11 @@ public class Individual {
 	
 	private float fitness;
 	
-	void Individual(Integer[][] mat){
-		matrix = mat;
+	public Individual(Integer[][] mask_matrix) {
+		matrix = mask_matrix;
 		computeFitness();
 	}
-	
+
 	public Integer getCell(int row, int col){
 		return matrix[row][col];		
 	}
