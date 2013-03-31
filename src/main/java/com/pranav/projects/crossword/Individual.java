@@ -21,10 +21,18 @@ public class Individual {
 	private double penalty_avg_cont_black_cells;
 	private double penalty_diagonal_black_cells;
 	
+	// Feasibility variable
+	private boolean feasible;
+	
 	// Constants
 	static double optimal_density = 0.5;
-	static double  optimal_intersections = 0.25;	
-	
+	static double optimal_intersections = 0.25;
+	static int contiguous_black_threshold = 5;
+	static int min_contiguous_black_cells = 1;
+	static int max_contiguous_black_cells = 1;
+	static int optimal_avg_word_len = 7;
+	static int min_word_len = 3;
+	static int max_word_len = 15;
 	
 	private double fitness;
 	
@@ -33,6 +41,10 @@ public class Individual {
 		rows = matrix.length;
 		cols = matrix[0].length;
 		computeFitness();
+	}
+	
+	public boolean isFeasible(){
+		return feasible;		
 	}
 	
 	public Integer getCell(int row, int col){
@@ -87,28 +99,55 @@ public class Individual {
 	}
 	
 	void computeFitness(){		
-		int whiteCells = 0, nIntersections = 0, asymmetries = 0;		
+		int whiteCells = 0, nIntersections = 0, asymmetries = 0;
+		int extraContiguousBlackCells = 0, contiguousBlackCells; 
+		int minContigBlackCells = Integer.MAX_VALUE, maxContigBlackCells = Integer.MIN_VALUE;
 		
 		// Iterate through the cells
 		for(int i = 0; i < rows; i++)
-		{
+		{			
+			contiguousBlackCells = 0;
 			for (int j = 0; j < cols; j++)
 			{
 				whiteCells += (matrix[i][j] == WHITE ? 1 : 0);
 				nIntersections += (isIntersection(i, j) ? 1 : 0);
-				asymmetries += (matrix[i][j] != matrix[j][i] ? 1 : 0);	// TODO : verify			
+				asymmetries += (matrix[i][j] != matrix[j][i] ? 1 : 0);	// TODO : verify
+				
+				/*
+				if (matrix[i][j] == BLACK)
+				{
+					contiguousBlackCells++;
+					if (contiguousBlackCells > contiguous_black_threshold)
+						extraContiguousBlackCells++;					
+				}
+				else
+				{
+					if (contiguousBlackCells > 0)
+					{
+						minContigBlackCells = Math.min(minContigBlackCells, contiguousBlackCells);
+						maxContigBlackCells = Math.max(maxContigBlackCells, contiguousBlackCells);
+						contiguousBlackCells = 0;
+					}					
+				}
+				*/
+				if (matrix[i][j] == WHITE)
+				{
+					
+				}
 			}
 		}
-		asymmetries /= 2;	// Every asymmetry counted twice
-		
+		asymmetries /= 2;	// Every asymmetry counted twice		
+
 		// Compute the penalties
 		penalty_density = Math.abs(whiteCells * 1.0 / (rows * cols) - optimal_density);
 		penalty_intersection = Math.abs(nIntersections - whiteCells * optimal_intersections);
 		penalty_symmetry = asymmetries;
+		penalty_cont_black_cells = extraContiguousBlackCells;	// TODO : Validate!?
+		
 		
 		
 		// Final step; compute fitness
-		double penaltiesSum = penalty_density;		// Sum up all penalties		
+		double penaltiesSum = penalty_density + penalty_symmetry;		// TODO : Sum up all penalties		
 		fitness = 1.0 / penaltiesSum;	
 	}
 }
