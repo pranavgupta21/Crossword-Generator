@@ -41,6 +41,13 @@ public class Individual {
 		cols = matrix[0].length;
 		computeFitness();
 	}
+	public int getRows(){
+		return rows;
+	}
+	
+	public int getCols(){
+		return cols;
+	}
 	
 	public boolean isFeasible(){
 		return feasible;		
@@ -50,6 +57,10 @@ public class Individual {
 		return matrix[row][col];		
 	}
 
+	public void setCell(int row, int col, int val){
+		matrix[row][col] = val;
+	}
+	
 	public double getDensityPenalty(){
 		return penalty_density;
 	}
@@ -72,6 +83,10 @@ public class Individual {
 	
 	public double getContBlackCellsPenalty(){
 		return penalty_cont_black_cells;
+	}
+	
+	public double getAvgContBlackCellsPenalty(){
+		return 	penalty_avg_cont_black_cells;
 	}
 	
 	public double getFitness(){
