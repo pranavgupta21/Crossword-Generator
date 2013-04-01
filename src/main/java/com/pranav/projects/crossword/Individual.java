@@ -5,8 +5,7 @@ public class Individual {
 	private Integer matrix[][];
 	
 	// TODO : Use enums
-	int BLACK = 0;
-	int WHITE = 1;
+	public static int BLACK = 0, WHITE = 1;
 	
 	// Variables required for matrix operations
 	int rows, cols;
@@ -36,7 +35,7 @@ public class Individual {
 	
 	private double fitness;
 	
-	void Individual(Integer[][] mat){
+	Individual(Integer[][] mat){
 		matrix = mat;
 		rows = matrix.length;
 		cols = matrix[0].length;
@@ -87,10 +86,17 @@ public class Individual {
 		{
 			boolean horizontalStrip = false, verticalStrip = false;
 			
-			//TODO: Check if this cell is part of a horizontal strip
+			// Check if this cell is part of a horizontal strip
+			if ( (row < rows - 1 && matrix[row + 1][col] == WHITE) || (row > 0 && matrix[row - 1][col] == WHITE))
+			{
+				horizontalStrip = true;
+			}			
 			
-			
-			//TODO: Check if this cell is part of a vertical strip 
+			// Check if this cell is part of a vertical strip
+			if ((col < cols - 1 && matrix[row][col + 1] == WHITE) || (col > 0 && matrix[row][col - 1] == WHITE))
+			{
+				verticalStrip = true;
+			}
 			
 			return horizontalStrip && verticalStrip;
 		}
@@ -102,19 +108,21 @@ public class Individual {
 		int whiteCells = 0, nIntersections = 0, asymmetries = 0;
 		int extraContiguousBlackCells = 0, contiguousBlackCells; 
 		int minContigBlackCells = Integer.MAX_VALUE, maxContigBlackCells = Integer.MIN_VALUE;
+		int wordLength, totalWordLength = 0, wordCount = 0;
+		int minWordLength = Integer.MAX_VALUE, maxWordLength = Integer.MIN_VALUE;
 		
 		// Iterate through the cells
-		for(int i = 0; i < rows; i++)
+		for(int r = 0; r < rows; r++)
 		{			
 			contiguousBlackCells = 0;
-			for (int j = 0; j < cols; j++)
+			wordLength = 0;
+			for (int c = 0; c < cols; c++)
 			{
-				whiteCells += (matrix[i][j] == WHITE ? 1 : 0);
-				nIntersections += (isIntersection(i, j) ? 1 : 0);
-				asymmetries += (matrix[i][j] != matrix[j][i] ? 1 : 0);	// TODO : verify
+				whiteCells += (matrix[r][c] == WHITE ? 1 : 0);
+				nIntersections += (isIntersection(r, c) ? 1 : 0);
+				asymmetries += (matrix[r][c] != matrix[c][r] ? 1 : 0);	// TODO : verify		
 				
-				/*
-				if (matrix[i][j] == BLACK)
+				if (matrix[r][c] == BLACK)
 				{
 					contiguousBlackCells++;
 					if (contiguousBlackCells > contiguous_black_threshold)
@@ -129,25 +137,85 @@ public class Individual {
 						contiguousBlackCells = 0;
 					}					
 				}
-				*/
-				if (matrix[i][j] == WHITE)
+				
+				if (matrix[r][c] == WHITE)
+				{					
+					wordLength++;					
+				}
+				else
 				{
-					
+					if (wordLength > 0)
+					{
+						minWordLength = Math.min (minWordLength, wordLength);
+						maxWordLength = Math.min (maxWordLength, wordLength);
+						totalWordLength += wordLength;
+						wordCount++;
+						wordLength = 0;
+					}
 				}
 			}
 		}
-		asymmetries /= 2;	// Every asymmetry counted twice		
+		asymmetries /= 2;	// Every asymmetry counted twice
+		
+		// Iterate column-wise now		
+		for(int c = 0; c < cols; c++)
+		{
+			contiguousBlackCells = 0;
+			wordLength = 0;
+			
+			for (int r = 0; r < rows; r++)
+			{
+				// TODO : Take away this repetitive code! 
+				if (matrix[r][c] == BLACK)
+				{
+					contiguousBlackCells++;
+					if (contiguousBlackCells > contiguous_black_threshold)
+						extraContiguousBlackCells++;					
+				}
+				else
+				{
+					if (contiguousBlackCells > 0)
+					{
+						minContigBlackCells = Math.min(minContigBlackCells, contiguousBlackCells);
+						maxContigBlackCells = Math.max(maxContigBlackCells, contiguousBlackCells);
+						contiguousBlackCells = 0;
+					}					
+				}
+				
+				if (matrix[r][c] == WHITE)
+				{					
+					wordLength++;					
+				}
+				else
+				{
+					if (wordLength > 0)
+					{
+						minWordLength = Math.min (minWordLength, wordLength);
+						maxWordLength = Math.min (maxWordLength, wordLength);
+						totalWordLength += wordLength;
+						wordCount++;
+						wordLength = 0;						
+					}
+				}
+			}
+		}
 
+		// Feasibility 
+		feasible = minWordLength >= min_word_len && maxWordLength <= max_word_len
+				&& minContigBlackCells >= min_contiguous_black_cells 
+				&& maxContigBlackCells <= max_contiguous_black_cells;
+		
 		// Compute the penalties
 		penalty_density = Math.abs(whiteCells * 1.0 / (rows * cols) - optimal_density);
 		penalty_intersection = Math.abs(nIntersections - whiteCells * optimal_intersections);
 		penalty_symmetry = asymmetries;
 		penalty_cont_black_cells = extraContiguousBlackCells;	// TODO : Validate!?
+		penalty_word_length = Math.abs(optimal_avg_word_len - totalWordLength * 1.0 / wordCount);
 		
-		
-		
+						
 		// Final step; compute fitness
-		double penaltiesSum = penalty_density + penalty_symmetry;		// TODO : Sum up all penalties		
+		double penaltiesSum = penalty_density + penalty_symmetry + penalty_symmetry		// TODO : Sum up all penalties		
+							  + penalty_cont_black_cells + penalty_word_length;
 		fitness = 1.0 / penaltiesSum;	
 	}
 }
