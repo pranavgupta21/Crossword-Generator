@@ -11,9 +11,9 @@ public class CrosswordGenerator {
 	
 	public static void init(){
 		populationSize = 1000;
-		dimRows = 15;
-		dimCols = 15;
-		maxIterations = 500;
+		dimRows = 10;
+		dimCols = 10;
+		maxIterations = 10000;
 	}
 	/**
 	 * Todo
@@ -81,10 +81,10 @@ public class CrosswordGenerator {
 		for (int rowNo = 0; rowNo < dimRows; rowNo++){
 			for (int colNo = 0; colNo < dimCols; colNo++){
 				if(best.getCell(rowNo, colNo) == 0){
-					System.out.print("$");
+					System.out.print(" $");
 				}
 				else{
-					System.out.print(" ");
+					System.out.print("  ");
 				}
 			}
 			System.out.println();
