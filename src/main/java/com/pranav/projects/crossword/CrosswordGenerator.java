@@ -13,7 +13,7 @@ public class CrosswordGenerator {
 		populationSize = 1000;
 		dimRows = 10;
 		dimCols = 10;
-		maxIterations = 10000;
+		maxIterations = 5000;
 	}
 	/**
 	 * Todo
