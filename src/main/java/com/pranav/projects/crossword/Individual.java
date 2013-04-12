@@ -14,24 +14,35 @@ public class Individual {
 	private double penalty_density;
 	private double penalty_intersection;
 	private double penalty_symmetry;
-	private double penalty_word_length;
 	private double penalty_avg_word_length;
+	private double penalty_word_length;
 	private double penalty_cont_black_cells;
-	private double penalty_avg_cont_black_cells;
 	private double penalty_diagonal_black_cells;
+	private double penalty_check;
+	
+	// weights for all the constraints //
+	static double weight_density = 3;
+	static double weight_intersection = 3;
+	static double weight_symmetry = 1;
+	static double weight_avg_word_length = 0;
+	static double weight_word_length = 1;
+	static double weight_cont_black_cells = 0;
+	static double weight_diagonal_black_cells = 1;
+	static double weight_check = 1;
 	
 	// Feasibility variable
 	private boolean feasible;
 	
 	// Constants
-	static double optimal_density = 0.5;
+	static double optimal_density = 0.67;
 	static double optimal_intersections = 0.25;
-	static int contiguous_black_threshold = 5;
+	static int contiguous_black_threshold = 4;
 	static int min_contiguous_black_cells = 1;
-	static int max_contiguous_black_cells = 1;
-	static int optimal_avg_word_len = 7;
+	static int max_contiguous_black_cells = 5;
+	static int optimal_avg_word_len = 4;
 	static int min_word_len = 3;
 	static int max_word_len = 15;
+	static double optimal_avg_check = 2;
 	
 	private double fitness;
 	
@@ -74,7 +85,7 @@ public class Individual {
 	}
 	
 	public double getWordLengthPenalty(){
-		return penalty_word_length;
+		return penalty_avg_word_length;
 	}
 	
 	public double getAvgWordLengthPenalty(){
@@ -86,7 +97,11 @@ public class Individual {
 	}
 	
 	public double getAvgContBlackCellsPenalty(){
-		return 	penalty_avg_cont_black_cells;
+		return 	penalty_cont_black_cells;
+	}
+	
+	public double getAvgCheckPenalty(){
+		return penalty_check;
 	}
 	
 	public double getFitness(){
@@ -125,26 +140,53 @@ public class Individual {
 		int minContigBlackCells = Integer.MAX_VALUE, maxContigBlackCells = Integer.MIN_VALUE;
 		int wordLength, totalWordLength = 0, wordCount = 0;
 		int minWordLength = Integer.MAX_VALUE, maxWordLength = Integer.MIN_VALUE;
+		int nWords = 0, colRunningCells[] = new int[cols], rowRunningCell;
 		
+		for (int colNo = 0; colNo < cols; colNo++){
+			colRunningCells[colNo] = this.BLACK;
+		}
 		// Iterate through the cells
 		for(int r = 0; r < rows; r++)
 		{			
 			contiguousBlackCells = 0;
 			wordLength = 0;
+			rowRunningCell = this.BLACK;
 			for (int c = 0; c < cols; c++)
 			{
 				whiteCells += (matrix[r][c] == WHITE ? 1 : 0);
 				nIntersections += (isIntersection(r, c) ? 1 : 0);
-				asymmetries += (matrix[r][c] != matrix[c][r] ? 1 : 0);	// TODO : verify		
+				asymmetries += (matrix[r][c] != matrix[rows - 1 - r][cols - 1 - c] ? 1 : 0);	// TODO : verify		
 				
 				if (matrix[r][c] == BLACK)
 				{
+					// checking for end of word - for counting total number of words //
+					// horizontal word
+					if(rowRunningCell == this.WHITE){
+						nWords++;
+						rowRunningCell = this.BLACK;
+					}
+					// vertical word
+					if(colRunningCells[c] == this.WHITE){
+						nWords++;
+						colRunningCells[c] = this.BLACK;
+					}
+
 					contiguousBlackCells++;
 					if (contiguousBlackCells > contiguous_black_threshold)
 						extraContiguousBlackCells++;					
 				}
 				else
 				{
+					// checking for end of word - for counting total number of words //
+					// horizontal word
+					if(c == cols - 1){
+						nWords++;
+					}
+					// vertical word
+					if(r == rows - 1){
+						nWords++;
+					}
+					
 					if (contiguousBlackCells > 0)
 					{
 						minContigBlackCells = Math.min(minContigBlackCells, contiguousBlackCells);
@@ -225,12 +267,13 @@ public class Individual {
 		penalty_intersection = Math.abs(nIntersections - whiteCells * optimal_intersections);
 		penalty_symmetry = asymmetries;
 		penalty_cont_black_cells = extraContiguousBlackCells;	// TODO : Validate!?
-		penalty_word_length = Math.abs(optimal_avg_word_len - totalWordLength * 1.0 / wordCount);
-		
+		penalty_avg_word_length = Math.abs(optimal_avg_word_len - totalWordLength * 1.0 / wordCount);
+		penalty_check = Math.abs(nIntersections * 1.0/nWords - optimal_avg_check);
 						
 		// Final step; compute fitness
-		double penaltiesSum = penalty_density + penalty_symmetry + penalty_symmetry		// TODO : Sum up all penalties		
-							  + penalty_cont_black_cells + penalty_word_length;
+		double penaltiesSum = (weight_density*penalty_density + weight_intersection*penalty_intersection + weight_symmetry*penalty_symmetry		// TODO : Sum up all penalties		
+							  + weight_avg_word_length*penalty_avg_word_length + weight_cont_black_cells*penalty_cont_black_cells + weight_check*penalty_check);
+							  
 		fitness = 1.0 / penaltiesSum;	
 	}
 }

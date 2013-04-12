@@ -11,36 +11,12 @@ public class CrossoverOperators {
 	public List<Individual> squarePatchCross(Individual p1, Individual p2){
 		int nRows = p1.getRows();
 		int nCols = p1.getCols();
-		/**
-		 *  total number of 2*2, 3*3, 4*4 patches combined
-		 *  2*2 = (n-1) * (m-1)
-		 *  3*3 = (n-2) * (m-2)
-		 *  4*4 = (n-3) * (m-3)
-		 */
 		int sideLen = (int) Math.floor(Math.random() * 3) + 2;
 		int patch1_x = 0, patch1_y = 0, patch2_x = 0, patch2_y = 0;
-		switch(sideLen){
-			case 2:
-				patch1_x = (int) Math.floor(Math.random() * (nRows - 1));
-				patch1_y = (int) Math.floor(Math.random() * (nCols - 1));
-				patch2_x = (int) Math.floor(Math.random() * (nRows - 1));
-				patch2_y = (int) Math.floor(Math.random() * (nCols - 1));
-				break;
-		
-			case 3:
-				patch1_x = (int) Math.floor(Math.random() * (nRows - 2));
-				patch1_y = (int) Math.floor(Math.random() * (nCols - 2));
-				patch2_x = (int) Math.floor(Math.random() * (nRows - 2));
-				patch2_y = (int) Math.floor(Math.random() * (nCols - 2));
-				break;
-		
-			case 4:
-				patch1_x = (int) Math.floor(Math.random() * (nRows - 3));
-				patch1_y = (int) Math.floor(Math.random() * (nCols - 3));
-				patch2_x = (int) Math.floor(Math.random() * (nRows - 3));
-				patch2_y = (int) Math.floor(Math.random() * (nCols - 3));
-				break;				
-		}
+		patch1_x = (int) Math.floor(Math.random() * (nRows - sideLen + 1));
+		patch1_y = (int) Math.floor(Math.random() * (nCols - sideLen + 1));
+		patch2_x = (int) Math.floor(Math.random() * (nRows - sideLen + 1));
+		patch2_y = (int) Math.floor(Math.random() * (nCols - sideLen + 1));
 		
 		int diffX = patch2_x - patch1_x, diffY = patch2_y - patch1_y;
 		//System.out.println(patch1_x + ", " + patch1_y + "\t" + patch2_x + ", " + patch2_y);
