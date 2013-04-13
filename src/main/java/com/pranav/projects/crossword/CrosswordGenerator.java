@@ -125,7 +125,7 @@ public class CrosswordGenerator extends HttpServlet {
 				bestIndividual = indNo;
 			}
 		}
-		//postProcessor.processWordLength(P.get(bestIndividual));
+		postProcessor.processWordLength(P.get(bestIndividual));
 		postProcessor.processAsymmetries(P.get(bestIndividual));
 		P.get(bestIndividual).computeFitness();
 		return P.get(bestIndividual);
@@ -164,8 +164,10 @@ public class CrosswordGenerator extends HttpServlet {
 		out.println("Intersection\t : \t" + best.getIntersectionPenalty());
 		out.println("Symmetry\t : \t" + best.getSymmetryPenalty());
 		out.println("Avg Word Length\t : \t" + best.getAvgWordLengthPenalty());
+		out.println("Word Length\t : \t" + best.getWordLengthPenalty());
 		out.println("Avg Contiguous Black Seq\t : \t" + best.getAvgContBlackCellsPenalty());
 		out.println("Avg Check\t : \t" + best.getAvgCheckPenalty());
+		out.println("nWords\t : \t " + best.getnWordsPenalty());
 		out.println();
 		for (int colNo = 0; colNo < dimCols; colNo++){
 			out.print("___");
@@ -200,9 +202,13 @@ public class CrosswordGenerator extends HttpServlet {
 		out.println("<br />");
 		out.println("Avg Word Length\t : \t" + best.getAvgWordLengthPenalty());
 		out.println("<br />");
+		out.println("Word Length\t : \t " + best.getWordLengthPenalty());
+		out.println("<br />");
 		out.println("Avg Contiguous Black Seq\t : \t" + best.getAvgContBlackCellsPenalty());
 		out.println("<br />");
 		out.println("Avg checks\t : \t" + best.getAvgCheckPenalty());
+		out.println("<br />");
+		out.println("nWords\t : \t" + best.getnWordsPenalty());
 		out.println("<br />");
 		out.println("<br />");
 		out.println("<table style=\"border:2px solid black;\"><tbody>");

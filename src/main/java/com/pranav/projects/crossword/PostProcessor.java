@@ -27,7 +27,7 @@ public class PostProcessor {
 				}
 				else{
 					// check horizontal word slot //
-					if(rowRunningWordLength > 0 && rowRunningWordLength < i.min_word_len){
+					if(rowRunningWordLength > 0 && rowRunningWordLength < 2/*i.min_word_len*/){
 						boolean problemAbove = false, problemBelow = false;
 						if(rowNo == 0 || i.getCell(rowNo-1, colNo-1) == i.BLACK){
 							problemAbove = true;
