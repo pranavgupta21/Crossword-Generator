@@ -27,10 +27,10 @@ public class Individual {
 	static double weight_symmetry = 1;
 	static double weight_avg_word_length = 3;
 	static double weight_word_length = 3;
-	static double weight_avg_black_legnth = 0;
-	static double weight_black_length = 0;
+	static double weight_avg_black_legnth = 1;
+	static double weight_black_length = 1;
 	static double weight_check = 1;
-	static double weight_nWords = 3;
+	static double weight_nWords = 0;
 	
 	// Feasibility variable
 	private boolean feasible;

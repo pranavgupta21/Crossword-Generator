@@ -20,12 +20,14 @@ public class CrosswordGenerator extends HttpServlet {
 	public static int dimCols;
 	public static int populationSize;
 	public static int maxIterations;
+	public static int maxExperiments;
 	
 	public static void initialize(){
-		populationSize = 1000;
+		populationSize = 500;
 		dimRows = 10;
 		dimCols = 10;
-		maxIterations = 1000;
+		maxIterations = 700;
+		maxExperiments = 5;
 	}
 	/**
 	 * Todo
@@ -63,72 +65,85 @@ public class CrosswordGenerator extends HttpServlet {
 		MutationOperators mutateOp = new MutationOperators();
 		PostProcessor postProcessor = new PostProcessor();
 		
+		int bestIndividual = 0;
+		Individual bestInd = null;
 		// generate Initial Population //
 		List<Individual> P = genInitialPopulation();
 		
-		// Iterate for Maximum Iterations //
-		for (int iterNo = 0; iterNo < maxIterations; iterNo++){
-			if(iterNo % 200 == 0 || maxIterations <= 500){
-				System.out.println("Iteration Number : " + iterNo);
+		// Iterate for maximum number of experiments/trials //
+		double maxFitness = 0;
+		for (int expNo = 0; expNo < maxExperiments; expNo++){
+			System.out.println("Experiment Number : " + expNo);
+			// Iterate for Maximum Iterations //
+			for (int iterNo = 0; iterNo < maxIterations; iterNo++){
+				if(iterNo % 200 == 0 || maxIterations <= 500){
+					System.out.println("Iteration Number : " + iterNo);
+				}
+				
+				// Selection //
+				List<Integer> selected = selOp.SRWS_SUS(P, populationSize/2);
+				//System.out.println("Selected : " + selected.size());
+				
+				// Crossover //
+				for (int crossNo = 0; crossNo < populationSize/4; crossNo++){
+					int p1 = (int) Math.floor(Math.random() * selected.size());
+					int p2 = (int) Math.floor(Math.random() * selected.size());
+					//System.out.println("P1 : " + p1 + "," + "P2 : " + p2);
+					P.addAll(crossOp.squarePatchCross(P.get(selected.get(p1)), P.get(selected.get(p2))));
+				}
+				
+				// Mutation //
+				for(int selectedNo = 0; selectedNo < selected.size(); selectedNo++){
+					P.add(mutateOp.mutateEachCell(P.get(selected.get(selectedNo))));
+				}
+				
+				// Survival //
+				List<Integer> survivors = selOp.SRWS_SUS(P, populationSize);
+				//System.out.println("Survivors : " + survivors.size());
+				List<Individual> PNext = new ArrayList<Individual>();
+				for(int survivorNo = 0; survivorNo < selected.size(); survivorNo++){
+					PNext.add(P.get(survivors.get(survivorNo)));
+				}
+				P = PNext;
+				
+				/*if(iterNo % 100 == 0){
+					for (int indNo = 0; indNo < P.size(); indNo++){
+						postProcessor.postProcess(P.get(indNo));
+						P.get(indNo).computeFitness();
+					}			
+				}*/
+			}
+		
+			// find best crossword //
+			int firstFeasible = 0;
+			while(firstFeasible < P.size() && !P.get(firstFeasible).isFeasible()){
+				firstFeasible++;
 			}
 			
-			// Selection //
-			List<Integer> selected = selOp.SRWS_SUS(P, populationSize/2);
-			//System.out.println("Selected : " + selected.size());
-			
-			// Crossover //
-			for (int crossNo = 0; crossNo < populationSize/4; crossNo++){
-				int p1 = (int) Math.floor(Math.random() * selected.size());
-				int p2 = (int) Math.floor(Math.random() * selected.size());
-				//System.out.println("P1 : " + p1 + "," + "P2 : " + p2);
-				P.addAll(crossOp.squarePatchCross(P.get(selected.get(p1)), P.get(selected.get(p2))));
+			bestIndividual = firstFeasible;
+			if(firstFeasible == P.size()){
+				System.out.println("NO FEASIBLE SOLUTIONS ! RETURNING BEST INFEASIBLE SOLUTION !");
+				bestIndividual = 0;
 			}
 			
-			// Mutation //
-			for(int selectedNo = 0; selectedNo < selected.size(); selectedNo++){
-				P.add(mutateOp.mutateEachCell(P.get(selected.get(selectedNo))));
+			double highestFitness = P.get(bestIndividual).getFitness();
+			for (int indNo = bestIndividual + 1; indNo < P.size(); indNo++){
+				if ((firstFeasible == P.size() || P.get(indNo).isFeasible()) && P.get(indNo).getFitness() > highestFitness){
+					highestFitness = P.get(indNo).getFitness();
+					bestIndividual = indNo;
+				}
 			}
-			
-			// Survival //
-			List<Integer> survivors = selOp.SRWS_SUS(P, populationSize);
-			//System.out.println("Survivors : " + survivors.size());
-			List<Individual> PNext = new ArrayList<Individual>();
-			for(int survivorNo = 0; survivorNo < selected.size(); survivorNo++){
-				PNext.add(P.get(survivors.get(survivorNo)));
+			//postProcessor.processWordLength(P.get(bestIndividual));
+			postProcessor.processAsymmetries(P.get(bestIndividual));
+			P.get(bestIndividual).computeFitness();
+			if (P.get(bestIndividual).getFitness() > maxFitness){
+				maxFitness = P.get(bestIndividual).getFitness();
+				bestInd = P.get(bestIndividual);
 			}
-			P = PNext;
-			
-			/*if(iterNo % 100 == 0){
-				for (int indNo = 0; indNo < P.size(); indNo++){
-					postProcessor.postProcess(P.get(indNo));
-					P.get(indNo).computeFitness();
-				}			
-			}*/
+			System.out.println("Highest Fitness till now : " + maxFitness);
 		}
 		
-		// find best crossword //
-		int firstFeasible = 0;
-		while(firstFeasible < P.size() && !P.get(firstFeasible).isFeasible()){
-			firstFeasible++;
-		}
-		
-		int bestIndividual = firstFeasible;
-		if(firstFeasible == P.size()){
-			System.out.println("NO FEASIBLE SOLUTIONS ! RETURNING BEST INFEASIBLE SOLUTION !");
-			bestIndividual = 0;
-		}
-		
-		double highestFitness = P.get(bestIndividual).getFitness();
-		for (int indNo = bestIndividual + 1; indNo < P.size(); indNo++){
-			if ((firstFeasible == P.size() || P.get(indNo).isFeasible()) && P.get(indNo).getFitness() > highestFitness){
-				highestFitness = P.get(indNo).getFitness();
-				bestIndividual = indNo;
-			}
-		}
-		postProcessor.processWordLength(P.get(bestIndividual));
-		postProcessor.processAsymmetries(P.get(bestIndividual));
-		P.get(bestIndividual).computeFitness();
-		return P.get(bestIndividual);
+		return bestInd;
 	}
 	
 	public static List<Individual> genInitialPopulation(){
@@ -168,6 +183,7 @@ public class CrosswordGenerator extends HttpServlet {
 		out.println("Avg Contiguous Black Seq\t : \t" + best.getAvgContBlackCellsPenalty());
 		out.println("Avg Check\t : \t" + best.getAvgCheckPenalty());
 		out.println("nWords\t : \t " + best.getnWordsPenalty());
+		out.println("Fitness of Best Individual : " + best.getFitness());
 		out.println();
 		for (int colNo = 0; colNo < dimCols; colNo++){
 			out.print("___");
